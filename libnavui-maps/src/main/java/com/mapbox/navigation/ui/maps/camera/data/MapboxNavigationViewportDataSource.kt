@@ -14,6 +14,7 @@ import com.mapbox.navigation.ui.maps.camera.NavigationCamera
 import com.mapbox.navigation.ui.maps.camera.utils.metersToKilometers
 import com.mapbox.navigation.ui.maps.camera.utils.shortestRotation
 import com.mapbox.navigation.ui.maps.camera.utils.toPoint
+import com.mapbox.navigation.ui.maps.internal.camera.data.MapboxNavigationViewportDataSourceDebugger
 import com.mapbox.turf.TurfConstants
 import com.mapbox.turf.TurfException
 import com.mapbox.turf.TurfMeasurement
@@ -139,6 +140,8 @@ class MapboxNavigationViewportDataSource(
     private val options: MapboxNavigationViewportDataSourceOptions,
     private val mapboxMap: MapboxMap
 ) : ViewportDataSource {
+
+    var debugger: MapboxNavigationViewportDataSourceDebugger? = null
 
     private var completeRoutePoints: List<List<List<Point>>> = emptyList()
     private var postManeuverFramingPoints: List<List<List<Point>>> = emptyList()
@@ -884,6 +887,9 @@ class MapboxNavigationViewportDataSource(
 
         followingZoomProperty.fallback =
             max(min(zoomAndCenter.first, options.maxZoom), options.minFollowingZoom)
+
+        debugger?.visualizeFollowingPoints(pointsForFollowing)
+        debugger?.visualizeFollowingPadding(followingPaddingProperty.get())
     }
 
     private fun updateOverviewData() {
