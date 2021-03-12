@@ -110,12 +110,14 @@ class MapboxCameraAnimationsActivity :
         40.0 * pixelDensity
     )
 
-    private val notPaddedEdgeInsets = EdgeInsets(
-        0.0,
-        0.0,
-        0.0,
-        0.0
-    )
+    private val notPaddedEdgeInsets: EdgeInsets by lazy {
+        EdgeInsets(
+            0.0,
+            0.0,
+            0.0,
+            0.0
+        )
+    }
 
     private var followingEdgeInsets = notPaddedEdgeInsets
         set(value) {
@@ -301,14 +303,14 @@ class MapboxCameraAnimationsActivity :
                 followingEdgeInsets.top,
                 20.0,
                 followingEdgeInsets.bottom,
-                120.0 * pixelDensity
+                200.0 * pixelDensity
             )
         }
 
         binding.gravitateRight.setOnClickListener {
             followingEdgeInsets = EdgeInsets(
                 followingEdgeInsets.top,
-                120.0 * pixelDensity,
+                200.0 * pixelDensity,
                 followingEdgeInsets.bottom,
                 20.0
             )
@@ -378,13 +380,13 @@ class MapboxCameraAnimationsActivity :
     }
 
     private fun startSimulation(route: DirectionsRoute) {
-        mapboxReplayer.stop()
+        mapboxReplayer.stop()/*
         mapboxReplayer.clearEvents()
         mapboxReplayer.pushRealLocation(this, 0.0)
         val replayEvents = replayRouteMapper.mapDirectionsRouteGeometry(route)
         mapboxReplayer.pushEvents(replayEvents)
         mapboxReplayer.seekTo(replayEvents.first())
-        mapboxReplayer.play()
+        mapboxReplayer.play()*/
     }
 
     private fun initStyle() {

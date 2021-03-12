@@ -727,7 +727,7 @@ class MapboxNavigationViewportDataSource(
                 if (followingPaddingUpdatesAllowed) {
                     val paddingFromAnchorPoint =
                         getEdgeInsetsFromPoint(mapboxMap.getSize(), followingAnchorProperty.get())
-                    padding(paddingFromAnchorPoint)
+                    padding(followingPaddingProperty.fallback)
                 }
             }.build()
 
@@ -766,12 +766,12 @@ class MapboxNavigationViewportDataSource(
             pointsForFollowing.add(0, localTargetLocation.toPoint())
         }
 
-        followingBearingProperty.fallback = getBearingForMap(
+        followingBearingProperty.fallback = localTargetLocation?.bearing?.toDouble() ?: 0.0/*getBearingForMap(
             bearingDiffMax,
             mapboxMap.getCameraOptions().bearing ?: 0.0,
             localTargetLocation?.bearing?.toDouble() ?: 0.0,
             pointsForFollowing
-        )
+        )*/
 
         followingPitchProperty.fallback = getPitchForDistanceRemainingOnStep(
             distanceFromManeuverToBeginPitchChange,
@@ -794,27 +794,25 @@ class MapboxNavigationViewportDataSource(
 
         pointsForFollowing.addAll(pointsToFrameAfterCurrentStep)
 
-        val zoomAndCenter = getZoomLevelAndCenterCoordinate(
+        val zoomAndCenter = getCamera(
             pointsForFollowing,
             followingBearingProperty.get(),
             followingPitchProperty.get(),
             followingPaddingProperty.get()
         )
 
-        val geometryCentroid = zoomAndCenter.second
-        val vehicleLocation = localTargetLocation?.toPoint() ?: geometryCentroid
-
-        followingCenterProperty.fallback = getMapCenterCoordinateFromPitchPercentage(
+        followingCenterProperty.fallback = zoomAndCenter.center!!/*getMapCenterCoordinateFromPitchPercentage(
             pitchPercentage,
             vehicleLocation,
             geometryCentroid
-        )
+        )*/
 
-        followingZoomProperty.fallback =
-            max(min(zoomAndCenter.first, options.maxZoom), options.minFollowingZoom)
+        followingZoomProperty.fallback = zoomAndCenter.zoom!!
+            // max(min(zoomAndCenter.first, options.maxZoom), options.minFollowingZoom)
+        followingPaddingProperty.fallback = zoomAndCenter.padding!!
 
         debugger?.visualizeFollowingPoints(pointsForFollowing)
-        debugger?.visualizeFollowingPadding(followingPaddingProperty.get())
+        debugger?.visualizeFollowingUserPadding(followingPaddingProperty.get())
     }
 
     private fun updateOverviewData() {
@@ -856,6 +854,18 @@ class MapboxNavigationViewportDataSource(
         } else null
 
         return Pair(cam?.zoom ?: MINIMUM_ZOOM_LEVEL_FOR_GEO, cam?.center ?: NULL_ISLAND_POINT)
+    }
+
+    private fun getCamera(
+        points: List<Point>,
+        bearing: Double,
+        pitch: Double,
+        padding: EdgeInsets
+    ): CameraOptions {
+        val cam = if (points.isNotEmpty()) {
+        } else null
+
+        return mapboxMap.cameraForCoordinates(points, padding, bearing, pitch)
     }
 }
 
