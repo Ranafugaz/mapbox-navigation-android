@@ -727,7 +727,7 @@ class MapboxNavigationViewportDataSource(
                 if (followingPaddingUpdatesAllowed) {
                     val paddingFromAnchorPoint =
                         getEdgeInsetsFromPoint(mapboxMap.getSize(), followingAnchorProperty.get())
-                    padding(followingPaddingProperty.fallback)
+                    padding(paddingFromAnchorPoint)
                 }
             }.build()
 
@@ -794,22 +794,24 @@ class MapboxNavigationViewportDataSource(
 
         pointsForFollowing.addAll(pointsToFrameAfterCurrentStep)
 
-        val zoomAndCenter = getCamera(
+        val zoomAndCenter = getZoomLevelAndCenterCoordinate(
             pointsForFollowing,
             followingBearingProperty.get(),
             followingPitchProperty.get(),
             followingPaddingProperty.get()
         )
 
-        followingCenterProperty.fallback = zoomAndCenter.center!!/*getMapCenterCoordinateFromPitchPercentage(
+        val geometryCentroid = zoomAndCenter.second
+        val vehicleLocation = localTargetLocation?.toPoint() ?: geometryCentroid
+
+        followingCenterProperty.fallback = getMapCenterCoordinateFromPitchPercentage(
             pitchPercentage,
             vehicleLocation,
             geometryCentroid
-        )*/
+        )
 
-        followingZoomProperty.fallback = zoomAndCenter.zoom!!
+        followingZoomProperty.fallback = zoomAndCenter.first
             // max(min(zoomAndCenter.first, options.maxZoom), options.minFollowingZoom)
-        followingPaddingProperty.fallback = zoomAndCenter.padding!!
 
         debugger?.visualizeFollowingPoints(pointsForFollowing)
         debugger?.visualizeFollowingUserPadding(followingPaddingProperty.get())
@@ -854,18 +856,6 @@ class MapboxNavigationViewportDataSource(
         } else null
 
         return Pair(cam?.zoom ?: MINIMUM_ZOOM_LEVEL_FOR_GEO, cam?.center ?: NULL_ISLAND_POINT)
-    }
-
-    private fun getCamera(
-        points: List<Point>,
-        bearing: Double,
-        pitch: Double,
-        padding: EdgeInsets
-    ): CameraOptions {
-        val cam = if (points.isNotEmpty()) {
-        } else null
-
-        return mapboxMap.cameraForCoordinates(points, padding, bearing, pitch)
     }
 }
 
