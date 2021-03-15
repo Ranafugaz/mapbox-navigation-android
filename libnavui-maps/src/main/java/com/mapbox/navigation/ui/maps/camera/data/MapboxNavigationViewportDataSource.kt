@@ -12,7 +12,6 @@ import com.mapbox.navigation.base.trip.model.RouteProgress
 import com.mapbox.navigation.core.MapboxNavigation
 import com.mapbox.navigation.ui.maps.camera.NavigationCamera
 import com.mapbox.navigation.ui.maps.camera.data.ViewportDataSourceProcessor.getAnchorPointFromPitchPercentage
-import com.mapbox.navigation.ui.maps.camera.data.ViewportDataSourceProcessor.getBearingForMap
 import com.mapbox.navigation.ui.maps.camera.data.ViewportDataSourceProcessor.getEdgeInsetsFromPoint
 import com.mapbox.navigation.ui.maps.camera.data.ViewportDataSourceProcessor.getMapCenterCoordinateFromPitchPercentage
 import com.mapbox.navigation.ui.maps.camera.data.ViewportDataSourceProcessor.getPitchForDistanceRemainingOnStep
@@ -24,11 +23,11 @@ import com.mapbox.navigation.ui.maps.camera.utils.metersToKilometers
 import com.mapbox.navigation.ui.maps.camera.utils.shortestRotation
 import com.mapbox.navigation.ui.maps.camera.utils.toPoint
 import com.mapbox.navigation.ui.maps.internal.camera.data.MapboxNavigationViewportDataSourceDebugger
+import com.mapbox.navigation.utils.internal.ifNonNull
 import com.mapbox.turf.TurfConstants
 import com.mapbox.turf.TurfException
 import com.mapbox.turf.TurfMisc
 import java.util.concurrent.CopyOnWriteArraySet
-import kotlin.math.max
 import kotlin.math.min
 
 private val NULL_ISLAND_POINT = Point.fromLngLat(0.0, 0.0)
@@ -783,7 +782,7 @@ class MapboxNavigationViewportDataSource(
 
         val pitchPercentage = getPitchPercentage(
             followingPitchProperty.get(),
-            options.maxFollowingPitch
+            0.0
         )
 
         followingAnchorProperty.fallback = getAnchorPointFromPitchPercentage(
@@ -810,7 +809,13 @@ class MapboxNavigationViewportDataSource(
             geometryCentroid
         )
 
-        followingZoomProperty.fallback = zoomAndCenter.first
+        followingZoomProperty.fallback = getZoomLevelForFollowing(
+            followingCenterProperty.fallback,
+            pointsForFollowing,
+            followingBearingProperty.get(),
+            followingPitchProperty.get(),
+            followingPaddingProperty.get()
+        )
             // max(min(zoomAndCenter.first, options.maxZoom), options.minFollowingZoom)
 
         debugger?.visualizeFollowingPoints(pointsForFollowing)
@@ -856,6 +861,36 @@ class MapboxNavigationViewportDataSource(
         } else null
 
         return Pair(cam?.zoom ?: MINIMUM_ZOOM_LEVEL_FOR_GEO, cam?.center ?: NULL_ISLAND_POINT)
+    }
+
+    private fun getZoomLevelForFollowing(
+        targetCenter: Point,
+        points: List<Point>,
+        bearing: Double,
+        pitch: Double,
+        padding: EdgeInsets
+    ): Double {
+        val currentCamera = mapboxMap.getCameraOptions()
+        val targetCenterCoordinate = mapboxMap.pixelForCoordinate(targetCenter)
+        val mapSize = mapboxMap.getSize()
+
+        val screenCoordinatesForFollowing = points.map {
+            mapboxMap.pixelForCoordinate(it)
+        }
+
+        val xCoordinates = screenCoordinatesForFollowing.map { it.x }
+        val yCoordinates = screenCoordinatesForFollowing.map { it.y }
+
+        val xMin = xCoordinates.minOrNull()
+        val xMax = xCoordinates.maxOrNull()
+        val yMin = yCoordinates.minOrNull()
+        val yMax = yCoordinates.maxOrNull()
+
+        ifNonNull(xMin, xMax, yMin, yMax) { xMin, xMax, yMin, yMax ->
+
+        }
+
+        return MINIMUM_ZOOM_LEVEL_FOR_GEO
     }
 }
 

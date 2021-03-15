@@ -114,7 +114,7 @@ internal object ViewportDataSourceProcessor {
     }
 
     fun getPitchPercentage(currentPitch: Double = 0.0, maxPitch: Double = 60.0): Double {
-        if (maxPitch == 0.0) return 0.0
+        if (maxPitch == 0.0) return 1.0
         return (currentPitch / maxPitch).coerceIn(0.0, 1.0)
     }
 

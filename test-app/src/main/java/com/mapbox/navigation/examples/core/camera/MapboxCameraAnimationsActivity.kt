@@ -380,13 +380,13 @@ class MapboxCameraAnimationsActivity :
     }
 
     private fun startSimulation(route: DirectionsRoute) {
-        mapboxReplayer.stop()/*
+        mapboxReplayer.stop()
         mapboxReplayer.clearEvents()
         mapboxReplayer.pushRealLocation(this, 0.0)
         val replayEvents = replayRouteMapper.mapDirectionsRouteGeometry(route)
         mapboxReplayer.pushEvents(replayEvents)
         mapboxReplayer.seekTo(replayEvents.first())
-        mapboxReplayer.play()*/
+        mapboxReplayer.play()
     }
 
     private fun initStyle() {
@@ -453,6 +453,7 @@ class MapboxCameraAnimationsActivity :
                 }
                 viewportDataSource.followingZoomUpdatesAllowed = true
                 viewportDataSource.followingPaddingPropertyOverride(followingEdgeInsets)
+                viewportDataSource.followingPitchPropertyOverride(0.0)
                 viewportDataSource.evaluate()
                 navigationCamera.requestNavigationCameraToFollowing()
             }
