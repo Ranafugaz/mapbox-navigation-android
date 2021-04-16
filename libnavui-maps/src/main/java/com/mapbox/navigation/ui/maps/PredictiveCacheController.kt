@@ -60,8 +60,6 @@ class PredictiveCacheController @JvmOverloads constructor(
     private val onStyleLoadedListener = object : OnStyleLoadedListener {
         override fun onStyleLoaded() {
             map?.let { map ->
-                val tileStorePath = map.getResourceOptions().tileStorePath
-                val tileStore = retrieveTileStore(tileStorePath)
                 val currentMapSources = mutableListOf<String>()
                 traverseMapSources(map) { tileVariant ->
                     currentMapSources.add(tileVariant)
@@ -69,7 +67,7 @@ class PredictiveCacheController @JvmOverloads constructor(
                 updateMapsControllers(
                     currentMapSources,
                     PredictiveCache.currentMapsPredictiveCacheControllers(),
-                    tileStore
+                    map.tileStore()
                 )
             }
         }
@@ -86,10 +84,8 @@ class PredictiveCacheController @JvmOverloads constructor(
      */
     fun setMapInstance(map: MapboxMap) {
         removeMapInstance()
-        val tileStorePath = map.getResourceOptions().tileStorePath
-        val tileStore = retrieveTileStore(tileStorePath)
         traverseMapSources(map) { tileVariant ->
-            PredictiveCache.createMapsController(tileStore, tileVariant)
+            PredictiveCache.createMapsController(map.tileStore(), tileVariant)
         }
         map.addOnStyleLoadedListener(onStyleLoadedListener)
         this.map = map
@@ -115,14 +111,6 @@ class PredictiveCacheController @JvmOverloads constructor(
     fun onDestroy() {
         removeMapInstance()
         PredictiveCache.clean()
-    }
-
-    private fun retrieveTileStore(path: String?): TileStore {
-        return if (path == null) {
-            TileStore.getInstance()
-        } else {
-            TileStore.getInstance(path)
-        }
     }
 
     private fun traverseMapSources(map: MapboxMap, fn: (String) -> Unit) {
@@ -173,5 +161,14 @@ class PredictiveCacheController @JvmOverloads constructor(
     private fun handleError(error: String?) {
         Log.e(TAG, error)
         predictiveCacheControllerErrorHandler?.onError(error)
+    }
+
+    private fun MapboxMap.tileStore(): TileStore {
+        val tileStorePath = this.getResourceOptions().tileStorePath
+        return if (tileStorePath == null) {
+            TileStore.getInstance()
+        } else {
+            TileStore.getInstance(tileStorePath)
+        }
     }
 }
